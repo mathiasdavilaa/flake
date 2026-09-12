@@ -1,4 +1,4 @@
-{ pkgs, ... }: {
+{ pkgs, inputs, ... }: {
   nixpkgs.config.allowUnfree = true;
   networking.networkmanager.enable = true;
 
@@ -29,6 +29,7 @@
   ];
 
   environment.systemPackages = with pkgs; [
+    inputs.noctalia.packages.${pkgs.system}.default
     git
     curl
     wget

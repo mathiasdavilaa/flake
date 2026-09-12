@@ -43,7 +43,6 @@
   environment.systemPackages = with pkgs; [
     spotify
     firefox
-    inputs.zen-browser.packages.${pkgs.system}.default
     chromium
     proton-vpn
     proton-pass
