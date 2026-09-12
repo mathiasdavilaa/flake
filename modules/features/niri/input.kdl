@@ -1,0 +1,22 @@
+input {
+    keyboard {
+        xkb {
+            layout "us,br"
+        }
+        repeat-rate 60
+        numlock
+    }
+
+    touchpad {
+        tap
+        natural-scroll
+    }
+
+    mouse {
+        accel-speed 0
+        accel-profile "flat"
+    }
+
+    trackpoint {
+    }
+}

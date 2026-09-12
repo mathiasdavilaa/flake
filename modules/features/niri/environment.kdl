@@ -1,0 +1,4 @@
+environment {
+    XCURSOR_SIZE "15"
+    HYPRCURSOR_SIZE "15"
+}
