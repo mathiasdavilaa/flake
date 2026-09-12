@@ -57,10 +57,8 @@
     };
   };
 
-  xdg.configFile."niri".source = ../modules/features/niri;
-
+  #xdg.configFile."niri".source = ../modules/features/niri;
   xdg.configFile."fastfetch".source = ../modules/features/fastfetch;
-
   xdg.configFile."kitty".source = ../modules/features/kitty;
 
   programs.fish = {

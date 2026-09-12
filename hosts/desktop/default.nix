@@ -3,12 +3,11 @@
 {
   imports = [
     ../../modules/common.nix
-    ../../modules/wm/niri.nix
     ./optimization.nix
   ];
 
   networking.hostName = "tarnished";
-  services.displayManager.defaultSession = "niri";
+  services.displayManager.defaultSession = "plasma";
 
   programs.fish.enable = true;
 
