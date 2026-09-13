@@ -7,19 +7,36 @@
     ../../modules/wm/plasma.nix
   ];
 
-  boot.loader.limine = {
-    secureBoot.enable = true;
 
-    extraEntries = ''/Windows
-      protocol: efi_chainload
-      image_path: boot():/EFI/Microsoft/Boot/bootmgfw.efi''    ;
+
+  boot = {
+    kernelParams = [
+      "nvme_core.default_ps_max_latency_us=0"
+      "usbcore.autosuspend=-1"
+    ];
+    loader.limine = {
+      secureBoot.enable = true;
+
+      extraEntries = ''/Windows
+        protocol: efi_chainload
+        image_path: boot():/EFI/Microsoft/Boot/bootmgfw.efi''    ;
+    };
   };
 
   fileSystems."/mad" = {
-    device = "/dev/disk/by-uuide/a8d26eb8-c63c-419a-9d8b-ccdf5b8b2411";
+    device = "/dev/nvme0n1p1";
     fsType = "ext4";
-    options = [ "nofail" "x-systemd.device-timeout=30s" ];
+    options = [ "nofail" ];
   };
+
+  security.polkit.extraConfig = ''
+    polkit.addRule(function(action, subject) {
+      if (action.id == "org.freedesktop.udisks2.filesystem-mount-system" &&
+          subject.user == "mad") {
+        return polkit.Result.YES;
+      }
+    });
+  '';
 
   networking.hostName = "tarnished";
   services.displayManager.defaultSession = "plasma";
@@ -56,19 +73,32 @@
   programs.ydotool.enable = true;
 
   environment.systemPackages = with pkgs; [
-    spotify
-    firefox
-    chromium
-    proton-vpn
-    proton-pass
-    discord
-    zapzap
-    localsend
+    #gaming
     prismlauncher
     ydotool
-    mangohud
+    usbutils
+
+    #browsers and media
+    inputs.zen-browser.packages.${pkgs.system}.default
+    spotify
+    firefox
+
+    #proton
+    proton-vpn
+    proton-pass
     protonup-qt
-    brmodelo
+
+    #chat
+    discord
+    zapzap
+
+    #files
+    localsend
     kdePackages.dolphin
+
+    #university
+    brmodelo
+
+    mangohud
   ];
 }
