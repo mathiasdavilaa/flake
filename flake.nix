@@ -4,11 +4,6 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
-    xwayland-satellite-flake = {
-      url = "github:Supreeeme/xwayland-satellite/v0.8.1";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -16,9 +11,8 @@
 
     nix-flatpak.url = "github:gmodena/nix-flatpak";
 
-    noctalia = {
-      url = "github:noctalia-dev/noctalia";
-      inputs.nixpkgs.follows = "nixpkgs";
+    xwayland-satellite-flake = {
+      url = "github:Supreeeme/xwayland-satellite/v0.8.1";
     };
 
     zen-browser = {
@@ -31,15 +25,15 @@
     {
       self,
       nixpkgs,
-      xwayland-satellite-flake,
       home-manager,
+      xwayland-satellite-flake,
       ...
     }@inputs:
 
     let
       system = "x86_64-linux";
-
       xwayland-pkg = xwayland-satellite-flake.packages.${system}.default;
+
     in
     {
       nixosConfigurations = {

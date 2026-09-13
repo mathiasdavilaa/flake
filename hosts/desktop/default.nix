@@ -7,8 +7,8 @@
     ../../modules/wm/plasma.nix
   ];
 
-
-
+  #========================================
+  # settings for my ssd
   boot = {
     kernelParams = [
       "nvme_core.default_ps_max_latency_us=0"
@@ -16,19 +16,16 @@
     ];
     loader.limine = {
       secureBoot.enable = true;
-
       extraEntries = ''/Windows
         protocol: efi_chainload
         image_path: boot():/EFI/Microsoft/Boot/bootmgfw.efi''    ;
     };
   };
-
   fileSystems."/mad" = {
     device = "/dev/nvme0n1p1";
     fsType = "ext4";
     options = [ "nofail" ];
   };
-
   security.polkit.extraConfig = ''
     polkit.addRule(function(action, subject) {
       if (action.id == "org.freedesktop.udisks2.filesystem-mount-system" &&
@@ -37,6 +34,7 @@
       }
     });
   '';
+  #========================================
 
   networking.hostName = "tarnished";
   services.displayManager.defaultSession = "plasma";
@@ -75,8 +73,7 @@
   environment.systemPackages = with pkgs; [
     #gaming
     prismlauncher
-    ydotool
-    usbutils
+    mangohud
 
     #browsers and media
     inputs.zen-browser.packages.${pkgs.system}.default
@@ -96,9 +93,7 @@
     localsend
     kdePackages.dolphin
 
-    #university
-    brmodelo
-
-    mangohud
+    #utils
+    usbutils
   ];
 }

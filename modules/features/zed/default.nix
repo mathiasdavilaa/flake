@@ -108,8 +108,6 @@
 
       theme = {
         mode = "dark";
-        dark = "DankShell Dark";
-        light = "DankShell Light";
       };
 
       icon_theme = "Material Icon Theme";

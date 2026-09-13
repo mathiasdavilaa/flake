@@ -5,9 +5,11 @@
     ../modules/features/zed
   ];
 
-  systemd.user.services.macro-mouse = {
+
+  systemd.user.services."macro-mouse@" = {
     Unit = {
-      Description = "Auto Farm Mouse Macro";
+      Description = "Auto Farm Mouse Macro (%i)";
+      After = [ "graphical-session.target" ];
     };
 
     Service = {
@@ -15,7 +17,7 @@
 
       ExecStart = "${pkgs.writeShellScript "macro-mouse" (
         builtins.readFile ../modules/features/scripts/macro-mouse.sh
-      )}";
+      )} %i";
 
       Environment = [
         "YDOTOOL_SOCKET=/run/ydotoold/socket"
@@ -30,7 +32,6 @@
   home.homeDirectory = "/home/mathias";
   home.stateVersion = "24.05";
 
-  #xdg.configFile."niri".source = ../modules/features/niri;
   xdg.configFile."fastfetch".source = ../modules/features/fastfetch;
   xdg.configFile."kitty".source = ../modules/features/kitty;
 

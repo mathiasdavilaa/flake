@@ -1,19 +1,41 @@
 #!/usr/bin/env bash
 
 # ============================================================
-# CONFIGURATION
+#
+# Usage:
+#   systemctl --user start macro-mouse@portaldesktop.service
+#   systemctl --user start macro-mouse@portallaptop.service
+#
+# Stop:
+#   systemctl --user stop macro-mouse@portaldesktop.service
+#
+# Add a new macro:
+#
+#   1. Create a new POSITIONS array:
+#
+#      MINECRAFT_POSITIONS=(
+#          "500 300"
+#          "800 500"
+#          "1000 700"
+#      )
+#
+#   2. Add it to the 'case':
+#
+#      minecraft)
+#          POSITIONS=("${MINECRAFT_POSITIONS[@]}")
+#          ;;
+#
+#   3. Start it:
+#
+#      systemctl --user start macro-mouse@minecraft.service
+#
+# The systemd template passes the name after '@' to this script
+# as $1.
+#
 # ============================================================
 
-# Niri output names
-LAPTOP_OUTPUT="eDP-1"
-DESKTOP_OUTPUT="DP-3"
 
-# ------------------------------------------------------------
-# LAPTOP POSITIONS
-# Configure your coordinates manually here
-# ------------------------------------------------------------
-
-LAPTOP_POSITIONS=(
+PORTALLAPTOP_POSITIONS=(
     "980 300"
     "400 611"
     "600 850"
@@ -21,12 +43,7 @@ LAPTOP_POSITIONS=(
     "1250 850"
 )
 
-# ------------------------------------------------------------
-# DESKTOP / EXTERNAL MONITOR POSITIONS
-# Configure your coordinates manually here
-# ------------------------------------------------------------
-
-DESKTOP_POSITIONS=(
+PORTALDESKTOP_POSITIONS=(
     "980 285"
     "400 550"
     "600 780"
@@ -34,85 +51,46 @@ DESKTOP_POSITIONS=(
     "1250 800"
 )
 
-# Delay between clicks
 DELAY=0.5
-
-# Path to ydotool
 YDOTOOL="/run/current-system/sw/bin/ydotool"
-
-# ydotoold socket on NixOS
 export YDOTOOL_SOCKET="/run/ydotoold/socket"
 
+MODE="${1:-portaldesktop}"
 
-# ============================================================
-# DETECT FOCUSED MONITOR
-# ============================================================
+case "$MODE" in
+    portallaptop)
+        POSITIONS=("${PORTALLAPTOP_POSITIONS[@]}")
+        echo "Using portallaptop positions."
+        ;;
+    portaldesktop)
+        POSITIONS=("${PORTALDESKTOP_POSITIONS[@]}")
+        echo "Using portaldesktop positions."
+        ;;
+    *)
+        echo "Use: $0 [portaldesktop|portallaptop]"
+        exit 1
+        ;;
+esac
 
-OUTPUT=$(niri msg -j focused-output)
-
-# Extract the output name
-OUTPUT_NAME=$(printf '%s\n' "$OUTPUT" \
-    | sed -n 's/.*"name":"\([^"]*\)".*/\1/p')
-
-if [ -z "$OUTPUT_NAME" ]; then
-    echo "Erro: não foi possível detectar o monitor focado."
+if [ ! -x "$YDOTOOL" ]; then
+    echo "Error: ydotool not found in $YDOTOOL."
     exit 1
 fi
 
-echo "Monitor detectado: $OUTPUT_NAME"
+cleanup() {
+    echo -e "\nStopped."
+    exit 0
+}
+trap cleanup SIGINT SIGTERM
 
-
-# ============================================================
-# SELECT POSITION LIST
-# ============================================================
-
-case "$OUTPUT_NAME" in
-
-    "$LAPTOP_OUTPUT")
-        echo "Usando pontos do LAPTOP"
-        POSITIONS=("${LAPTOP_POSITIONS[@]}")
-        ;;
-
-    "$DESKTOP_OUTPUT")
-        echo "Usando pontos do DESKTOP"
-        POSITIONS=("${DESKTOP_POSITIONS[@]}")
-        ;;
-
-    *)
-        echo "Erro: monitor '$OUTPUT_NAME' não está configurado."
-        echo "Configure o nome dele em LAPTOP_OUTPUT ou DESKTOP_OUTPUT."
-        exit 1
-        ;;
-
-esac
-
-
-# ============================================================
-# MACRO
-# ============================================================
-
-echo "Posições configuradas:"
-
-for pos in "${POSITIONS[@]}"; do
-    echo "  $pos"
-done
-
-echo "Macro iniciada."
+echo "Macro started. Use the same command to stop."
 
 while true; do
-
     for pos in "${POSITIONS[@]}"; do
-
         read -r x y <<< "$pos"
-
         "$YDOTOOL" mousemove --absolute -x "$x" -y "$y"
-
         sleep 0.05
-
         "$YDOTOOL" click 0xC0
-
         sleep "$DELAY"
-
     done
-
 done

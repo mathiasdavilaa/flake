@@ -31,17 +31,9 @@
     powerOnBoot = true;
   };
 
-  programs.steam = {
-    enable = true;
-    remotePlay.openFirewall = true;
-    dedicatedServer.openFirewall = true;
-    gamescopeSession.enable = true;
-  };
-
   programs.ydotool.enable = true;
 
   environment.systemPackages = with pkgs; [
-    firefox
     inputs.zen-browser.packages.${pkgs.system}.default
     zapzap
     vscode

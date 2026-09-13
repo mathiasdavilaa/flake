@@ -6,9 +6,11 @@
     ../modules/features/zed
   ];
 
-  systemd.user.services.macro-mouse = {
+
+  systemd.user.services."macro-mouse@" = {
     Unit = {
-      Description = "Auto Farm Mouse Macro";
+      Description = "Auto Farm Mouse Macro (%i)";
+      After = [ "graphical-session.target" ];
     };
 
     Service = {
@@ -16,7 +18,7 @@
 
       ExecStart = "${pkgs.writeShellScript "macro-mouse" (
         builtins.readFile ../modules/features/scripts/macro-mouse.sh
-      )}";
+      )} %i";
 
       Environment = [
         "YDOTOOL_SOCKET=/run/ydotoold/socket"
@@ -57,9 +59,8 @@
     };
   };
 
-  #xdg.configFile."niri".source = ../modules/features/niri;
-  xdg.configFile."fastfetch".source = ../modules/features/fastfetch;
-  xdg.configFile."kitty".source = ../modules/features/kitty;
+  xdg.configFile."fastfetch".source = ../modules/features/fastfetch; #home manager
+  xdg.configFile."kitty".source = ../modules/features/kitty; #home manager
 
   programs.fish = {
     enable = true;
@@ -70,9 +71,9 @@
     '';
 
     shellAliases = {
-      ncfg = "zediter ~/.nixos";
+      ncfg = "zeditor ~/flake";
       nrs = "git add . && sudo nixos-rebuild switch --impure --flake ~/flake#desktop";
-      nru = "nix flake update --flake ~/.nixos";
+      nru = "nix flake update --flake ~/flake";
       ff = "fastfetch";
     };
   };

@@ -29,18 +29,16 @@
   ];
 
   environment.systemPackages = with pkgs; [
-    inputs.noctalia.packages.${pkgs.system}.default
     git
-    curl
-    wget
+    ghostty
     kitty
     fastfetch
     xwayland
     mpv
     imv
     neovim
-    foot
     sbctl
+    ydotool
   ];
 
   system.stateVersion = "24.05";
