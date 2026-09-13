@@ -4,7 +4,22 @@
   imports = [
     ../../modules/common.nix
     ./optimization.nix
+    ../../modules/wm/plasma.nix
   ];
+
+  boot.loader.limine = {
+    secureBoot.enable = true;
+
+    extraEntries = ''/Windows
+      protocol: efi_chainload
+      image_path: boot():/EFI/Microsoft/Boot/bootmgfw.efi''    ;
+  };
+
+  fileSystems."/mad" = {
+    device = "/dev/disk/by-uuide/a8d26eb8-c63c-419a-9d8b-ccdf5b8b2411";
+    fsType = "ext4";
+    options = [ "nofail" "x-systemd.device-timeout=30s" ];
+  };
 
   networking.hostName = "tarnished";
   services.displayManager.defaultSession = "plasma";

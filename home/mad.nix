@@ -71,7 +71,7 @@
 
     shellAliases = {
       ncfg = "zediter ~/.nixos";
-      nrs = "git add . && sudo nixos-rebuild switch --impure --flake ~/.nixos#desktop";
+      nrs = "git add . && sudo nixos-rebuild switch --impure --flake ~/flake#desktop";
       nru = "nix flake update --flake ~/.nixos";
       ff = "fastfetch";
     };
