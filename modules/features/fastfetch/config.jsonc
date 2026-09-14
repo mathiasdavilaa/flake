@@ -63,18 +63,23 @@
       "type": "display",
       "key": "│ ├󱄄"
     },
-
     {
       "type": "disk",
       "key": "│ ├󰋊",
-      "folders": "/"
+      "folders": [
+        "/",
+        "/mad"
+      ]
     },
 
     {
       "type": "memory",
       "key": "│ ├"
     },
-
+    {
+      "type": "battery",
+      "key": "│ ├"
+    },
     {
       "type": "swap",
       "key": "└ └󰓡"
