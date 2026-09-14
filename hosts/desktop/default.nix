@@ -5,6 +5,7 @@
     ../../modules/common.nix
     ./optimization.nix
     ../../modules/wm/plasma.nix
+    ../../modules/wm/mangowm.nix
   ];
 
   #========================================
@@ -71,6 +72,7 @@
   programs.ydotool.enable = true;
 
   environment.systemPackages = with pkgs; [
+    inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default
     #gaming
     prismlauncher
     mangohud
@@ -78,7 +80,7 @@
     #browsers and media
     inputs.zen-browser.packages.${pkgs.system}.default
     spotify
-    firefox
+    brave-origin
 
     #proton
     proton-vpn
@@ -95,5 +97,7 @@
 
     #utils
     usbutils
+    wlr-randr
+    wev
   ];
 }
