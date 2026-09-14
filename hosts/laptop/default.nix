@@ -4,6 +4,7 @@
   imports = [
     ../../modules/common.nix
     ../../modules/wm/plasma.nix
+    ../../modules/wm/mangowm.nix
   ];
 
   networking.hostName = "nixos";
@@ -34,6 +35,7 @@
   programs.ydotool.enable = true;
 
   environment.systemPackages = with pkgs; [
+    inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default
     inputs.zen-browser.packages.${pkgs.system}.default
     zapzap
     vscode

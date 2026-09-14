@@ -39,6 +39,9 @@
     neovim
     sbctl
     ydotool
+
+    #coding languages
+    python3
   ];
 
   system.stateVersion = "24.05";

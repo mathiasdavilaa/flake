@@ -44,9 +44,9 @@
     '';
 
     shellAliases = {
-      ncfg = "zediter ~/.nixos";
+      ncfg = "zeditor ~/flake";
       nrs = "git add . && sudo nixos-rebuild switch --impure --flake ~/flake#laptop";
-      nru = "nix flake update --flake ~/.nixos";
+      nru = "nix flake update --flake ~/flake";
       ff = "fastfetch";
     };
   };
