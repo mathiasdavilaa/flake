@@ -94,7 +94,6 @@
     #files
     localsend
     yazi
-    nautilus
 
     #utils
     usbutils
