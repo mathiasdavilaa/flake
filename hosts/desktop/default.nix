@@ -93,7 +93,8 @@
 
     #files
     localsend
-    kdePackages.dolphin
+    yazi
+    nautilus
 
     #utils
     usbutils

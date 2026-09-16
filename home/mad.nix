@@ -61,6 +61,8 @@
 
   xdg.configFile."fastfetch".source = ../modules/features/fastfetch; #home manager
   xdg.configFile."kitty".source = ../modules/features/kitty; #home manager
+  xdg.configFile."ghostty".source = ../modules/features/ghostty;
+  xdg.configFile."mango".source = ../modules/features/mango;
 
   programs.fish = {
     enable = true;
