@@ -42,5 +42,6 @@
     proton-pass
     proton-vpn
     nautilus
+    yazi
   ];
 }
