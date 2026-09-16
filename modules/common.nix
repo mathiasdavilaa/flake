@@ -30,8 +30,8 @@
 
   environment.systemPackages = with pkgs; [
     git
+    lazygit
     ghostty
-    kitty
     fastfetch
     xwayland
     mpv

@@ -3,12 +3,12 @@
 {
   imports = [
     ../../modules/common.nix
-    ../../modules/wm/plasma.nix
+    #../../modules/wm/plasma.nix
     ../../modules/wm/mangowm.nix
   ];
 
   networking.hostName = "nixos";
-  services.displayManager.defaultSession = "plasma";
+  services.displayManager.defaultSession = "mango";
 
   programs.fish.enable = true;
 

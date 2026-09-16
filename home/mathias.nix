@@ -35,6 +35,15 @@
   xdg.configFile."fastfetch".source = ../modules/features/fastfetch;
   xdg.configFile."kitty".source = ../modules/features/kitty;
 
+  home.pointerCursor = {
+    package = pkgs.bibata-cursors;
+    name = "Bibata-Modern-Ice";
+    size = 20;
+
+    gtk.enable = true;
+    x11.enable = true;
+  };
+
   programs.fish = {
     enable = true;
 
@@ -45,7 +54,7 @@
 
     shellAliases = {
       ncfg = "zeditor ~/flake";
-      nrs = "git add . && sudo nixos-rebuild switch --impure --flake ~/flake#laptop";
+      nrs = "cd ~/flake && git add . && sudo nixos-rebuild switch --impure --flake ~/flake#laptop";
       nru = "nix flake update --flake ~/flake";
       ff = "fastfetch";
     };

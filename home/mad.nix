@@ -72,7 +72,7 @@
 
     shellAliases = {
       ncfg = "zeditor ~/flake";
-      nrs = "git add . && sudo nixos-rebuild switch --impure --flake ~/flake#desktop";
+      nrs = "cd ~/flake && git add . && sudo nixos-rebuild switch --impure --flake ~/flake#desktop";
       nru = "nix flake update --flake ~/flake";
       ff = "fastfetch";
     };
