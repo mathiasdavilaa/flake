@@ -32,8 +32,10 @@
   home.homeDirectory = "/home/mathias";
   home.stateVersion = "24.05";
 
-  xdg.configFile."fastfetch".source = ../modules/features/fastfetch;
-  xdg.configFile."kitty".source = ../modules/features/kitty;
+  xdg.configFile."fastfetch".source = ../modules/features/fastfetch; #home manager
+  xdg.configFile."kitty".source = ../modules/features/kitty; #home manager
+  xdg.configFile."ghostty".source = ../modules/features/ghostty;
+  xdg.configFile."mango".source = ../modules/features/mango;
 
   home.pointerCursor = {
     package = pkgs.bibata-cursors;
