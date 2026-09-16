@@ -41,5 +41,6 @@
     vscode
     proton-pass
     proton-vpn
+    nautilus
   ];
 }
