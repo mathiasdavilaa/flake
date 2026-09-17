@@ -3,30 +3,8 @@
 {
   imports = [
     ../modules/features/zed
+    ../modules/features/macro
   ];
-
-
-  systemd.user.services."macro-mouse@" = {
-    Unit = {
-      Description = "Auto Farm Mouse Macro (%i)";
-      After = [ "graphical-session.target" ];
-    };
-
-    Service = {
-      Type = "simple";
-
-      ExecStart = "${pkgs.writeShellScript "macro-mouse" (
-        builtins.readFile ../modules/features/scripts/macro-mouse.sh
-      )} %i";
-
-      Environment = [
-        "YDOTOOL_SOCKET=/run/ydotoold/socket"
-      ];
-
-      KillMode = "control-group";
-      Restart = "no";
-    };
-  };
 
   home.username = "mathias";
   home.homeDirectory = "/home/mathias";

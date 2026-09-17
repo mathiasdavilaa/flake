@@ -39,6 +39,7 @@
     neovim
     sbctl
     ydotool
+    libnotify
 
     #coding languages
     python3
