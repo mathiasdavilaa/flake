@@ -5,6 +5,10 @@
     inputs.nix-flatpak.homeManagerModules.nix-flatpak
     ../modules/features/zed
     ../modules/features/macro
+    ../modules/features/fastfetch
+    ../modules/features/kitty
+    ../modules/features/ghostty
+    ../modules/features/mango
   ];
 
   home.username = "mad";
@@ -36,11 +40,6 @@
       };
     };
   };
-
-  xdg.configFile."fastfetch".source = ../modules/features/fastfetch; #home manager
-  xdg.configFile."kitty".source = ../modules/features/kitty; #home manager
-  xdg.configFile."ghostty".source = ../modules/features/ghostty;
-  xdg.configFile."mango".source = ../modules/features/mango;
 
   programs.fish = {
     enable = true;

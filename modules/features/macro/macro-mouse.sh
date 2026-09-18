@@ -1,117 +1,31 @@
 #!/usr/bin/env bash
 #
-# macro-mouse.sh — cliques automáticos via ydotool + mango
-#
-# Uso:
-#   macro-mouse.sh <macro>              inicia (loop infinito)
-#   macro-mouse.sh <macro> --once       roda uma volta só e sai
-#   macro-mouse.sh <macro> --dry-run    só imprime os cliques, não move nada
-#   macro-mouse.sh --list               lista os macros cadastrados
-#   macro-mouse.sh --pos                imprime a posição atual do cursor
-#   macro-mouse.sh -h | --help          esta ajuda
-#
-#   systemctl --user start macro-mouse@<macro>.service   (via systemd)
-#   systemctl --user stop  macro-mouse@<macro>.service
-#
-# Documentação completa (arquitetura, calibração, troubleshooting):
-#   ../macro/README.md
-#
-# Resumo de como funciona: cada clique é um MOVIMENTO RELATIVO —
-# lê a posição real do cursor via `mmsg get cursorpos`, calcula o
-# delta até o alvo e manda pro ydotool. Não usa --absolute (não é
-# confiável em multi-monitor). Detalhes no README.
-#
-# ============================================================
-#  CADASTRO DE MACROS — é só isso, nada de mexer em case/if
-# ============================================================
-#
-#   1. Descubra as coordenadas:
-#        ~/.config/mango/scripts/get-mousepos.sh
-#      (ou: macro-mouse.sh --pos, pra pegar um ponto rápido)
-#
-#   2. Declare o array de posições e a resolução em que foram
-#      medidas, seguindo o padrão <PREFIXO>_REF / <PREFIXO>_POSITIONS:
-#
-#        MINECRAFT_REF="1920x1080"
-#        MINECRAFT_POSITIONS=(
-#            "500 300"
-#            "800 500"
-#        )
-#
-#      Opcional: se você mediu à mão numa resolução específica
-#      (em vez de deixar reescalar), declare também
-#      <PREFIXO>_POSITIONS_<LARGURA>x<ALTURA> — quando existir, é
-#      usado literalmente, sem reescalonamento.
-#
-#      Opcional: <PREFIXO>_DELAY sobrescreve o delay entre
-#      cliques só pra esse macro (padrão: $MACRO_DELAY ou 0.5s).
-#
-#   3. Registre o nome (e apelidos, se quiser) em MACRO_ALIASES,
-#      logo abaixo das definições:
-#
-#        [minecraft]=MINECRAFT
-#
-#   4. Teste sem clicar de verdade:
-#        macro-mouse.sh minecraft --dry-run
-#
-#   5. Use:
-#        ~/.config/mango/scripts/macro-toggle.sh minecraft
-#
-# ============================================================
+# macro-mouse — cliques automáticos via ydotool + mango.
+# Uso, cadastro de novos macros e troubleshooting: README.md
+# (modules/features/macro/)
 
 set -uo pipefail
-
-# ------------------------------------------------------------
-# CONFIG GLOBAL
-# ------------------------------------------------------------
 
 YDOTOOL="${YDOTOOL:-/run/current-system/sw/bin/ydotool}"
 export YDOTOOL_SOCKET="${YDOTOOL_SOCKET:-/run/ydotoold/socket}"
 DEFAULT_DELAY="${MACRO_DELAY:-0.5}"
+MACROS_DIR="${MACROS_DIR:-$(dirname "$(readlink -f "$0")")/macros}"
 
-# ------------------------------------------------------------
-# MACROS — posições em pixels reais (mmsg cursorpos), na
-# resolução declarada em *_REF.
-# ------------------------------------------------------------
+declare -A MACRO_ALIASES=()
 
-# medido no desktop, 1920x1080, monitor DP-3
-PORTAL_REF="1920x1080"
-PORTAL_POSITIONS=(
-    "955 275"
-    "390 555"
-    "610 790"
-    "700 370"
-    "1250 780"
-)
-
-# override opcional: valores medidos à mão no laptop (1920x1200).
-# Apague se preferir deixar o reescalonamento automático cuidar.
-PORTAL_POSITIONS_1920x1200=(
-    "980 300"
-    "400 611"
-    "600 850"
-    "700 411"
-    "1250 850"
-)
-
-# ------------------------------------------------------------
-# REGISTRO — nome usado no comando -> prefixo das variáveis acima.
-# Vários nomes podem apontar pro mesmo prefixo (apelidos).
-# ------------------------------------------------------------
-
-declare -A MACRO_ALIASES=(
-    [portal]=PORTAL
-    [portaldesktop]=PORTAL   # nome antigo, mantido por compatibilidade
-    [portallaptop]=PORTAL    # nome antigo, mantido por compatibilidade
-)
-
-# ============================================================
-#  daqui pra baixo é motor — normalmente não precisa mexer
-# ============================================================
+load_macros() {
+    local f
+    for f in "$MACROS_DIR"/*.macro; do
+        [ -e "$f" ] || continue
+        # shellcheck source=/dev/null
+        source "$f"
+    done
+}
 
 usage() {
     cat <<EOF
 Uso: ${0##*/} <macro> [--once] [--dry-run]
+     ${0##*/} --capture [nome]
      ${0##*/} --list
      ${0##*/} --pos
      ${0##*/} -h | --help
@@ -122,6 +36,8 @@ $(list_macros | sed 's/^/  /')
 Flags:
   --once       roda uma volta só (não fica em loop)
   --dry-run    imprime os cliques sem mover o mouse de verdade
+  --capture    modo guiado pra descobrir coordenadas e gerar um
+               arquivo macros/<nome>.macro pronto pra colar
   --list       lista os macros cadastrados e sai
   --pos        imprime a posição atual do cursor ("x y") e sai
 
@@ -129,7 +45,7 @@ Variáveis de ambiente:
   MACRO_RES=1920x1080   força a resolução (em vez de detectar)
   MACRO_DELAY=0.5        delay padrão entre cliques (segundos)
 
-Documentação completa: ../macro/README.md
+Documentação completa: README.md (modules/features/macro/)
 EOF
 }
 
@@ -178,33 +94,35 @@ cursorpos() {
     mmsg get cursorpos | jq -r '"\(.x) \(.y)"'
 }
 
-# Resolução da tela: só decide qual array de posições usar.
-detect_res() {
+# geometria do monitor focado: "largura altura origem_x origem_y".
+# origem_x/y ficam em 0 se o mmsg não expuser esses campos — nesse
+# caso o comportamento é idêntico ao de antes (sem offset).
+focused_monitor_geom() {
     if [ -n "${MACRO_RES:-}" ]; then
-        printf '%s\n' "$MACRO_RES"
+        printf '%s 0 0\n' "${MACRO_RES/x/ }"
         return
     fi
 
-    local res
-    res="$(
+    local geom
+    geom="$(
         { mmsg get all-monitors 2>/dev/null || mmsg -O 2>/dev/null; } |
         jq -r '
             [.. | objects | select(has("width") and has("height"))] as $mons
             | ( $mons[] | select(.focused==true or .active==true or .selected==true) )
               // $mons[0]
-            | "\(.width|floor)x\(.height|floor)"
+            | "\(.width|floor) \(.height|floor) \((.x // 0)|floor) \((.y // 0)|floor)"
         ' 2>/dev/null
     )"
-    case "$res" in
-        [0-9]*x[0-9]*)
-            printf '%s\n' "$res"
+    case "$geom" in
+        [0-9]*' '[0-9]*' '*)
+            printf '%s\n' "$geom"
             return
             ;;
     esac
 
-    # último recurso: modo nativo do EDID (não acompanha
-    # mudanças feitas só no config do mango, mas serve de
-    # fallback se o mmsg falhar por algum motivo)
+    # último recurso: modo nativo do EDID (não dá pra saber a
+    # origem no layout, então assume 0,0 — serve de fallback se o
+    # mmsg falhar por algum motivo)
     local conn mode
     for conn in /sys/class/drm/card*-*; do
         [ -r "$conn/status" ] || continue
@@ -212,13 +130,13 @@ detect_res() {
         mode="$(head -n1 "$conn/modes" 2>/dev/null)"
         case "$mode" in
             [0-9]*x[0-9]*)
-                printf '%s\n' "$mode"
+                printf '%s 0 0\n' "${mode/x/ }"
                 return
                 ;;
         esac
     done
 
-    printf '1920x1080\n'
+    printf '1920 1080 0 0\n'
 }
 
 # scale <valor> <referência> <atual>  (com arredondamento)
@@ -226,38 +144,44 @@ scale() {
     echo $(( ($1 * $3 + $2 / 2) / $2 ))
 }
 
-# resolve as posições do macro pedido pra resolução atual.
+# resolve as posições do macro pedido pra resolução/monitor atual,
+# já somando a origem do monitor focado (coordenada global final).
 # preenche o array global POSITIONS.
 resolve_positions() {
-    local macro="$1" res="$2"
+    local macro="$1" res="$2" mon_x="$3" mon_y="$4"
     local exact="${macro}_POSITIONS_${res}"
     local base="${macro}_POSITIONS"
     local refname="${macro}_REF"
-
-    POSITIONS=()
+    local -a local_positions=()
 
     if declare -p "$exact" >/dev/null 2>&1; then
         local -n _src="$exact"
-        POSITIONS=("${_src[@]}")
+        local_positions=("${_src[@]}")
         echo "macro em ${res}: usando posições medidas nessa resolução." >&2
-        return
+    else
+        if ! declare -p "$base" >/dev/null 2>&1; then
+            die "macro '$macro' não tem ${base} declarado."
+        fi
+
+        local -n _src="$base"
+        local -n _ref="$refname"
+        local rw="${_ref%x*}" rh="${_ref#*x}"
+        local w="${res%x*}" h="${res#*x}"
+        local pos x y
+
+        for pos in "${_src[@]}"; do
+            read -r x y <<<"$pos"
+            local_positions+=("$(scale "$x" "$rw" "$w") $(scale "$y" "$rh" "$h")")
+        done
+        echo "macro em ${res}: reescalado a partir de ${_ref}." >&2
     fi
 
-    if ! declare -p "$base" >/dev/null 2>&1; then
-        die "macro '$macro' não tem ${base} declarado."
-    fi
-
-    local -n _src="$base"
-    local -n _ref="$refname"
-    local rw="${_ref%x*}" rh="${_ref#*x}"
-    local w="${res%x*}" h="${res#*x}"
+    POSITIONS=()
     local pos x y
-
-    for pos in "${_src[@]}"; do
+    for pos in "${local_positions[@]}"; do
         read -r x y <<<"$pos"
-        POSITIONS+=("$(scale "$x" "$rw" "$w") $(scale "$y" "$rh" "$h")")
+        POSITIONS+=("$((x + mon_x)) $((y + mon_y))")
     done
-    echo "macro em ${res}: reescalado a partir de ${_ref}." >&2
 }
 
 SLEEP_PID=""
@@ -279,8 +203,9 @@ nap() {
 }
 
 # click_at <x-alvo> <y-alvo> [--dry-run]: anda por delta
-# relativo até o alvo e clica. Consulta a posição real antes de
-# cada movimento, então erros não acumulam entre cliques.
+# relativo até o alvo (já em coordenada global) e clica. Consulta
+# a posição real antes de cada movimento, então erros não
+# acumulam entre cliques.
 click_at() {
     local tx="$1" ty="$2" dry="${3:-}" cx cy dx dy
     read -r cx cy < <(cursorpos)
@@ -298,6 +223,60 @@ click_at() {
     "$YDOTOOL" click 0xC0
 }
 
+# modo guiado: pede ENTER a cada ponto, mostra a posição
+# capturada (já em coordenada LOCAL do monitor focado, pronta pra
+# colar num arquivo macros/<nome>.macro) e imprime o bloco final.
+capture_mode() {
+    local name="${1:-}"
+    command -v mmsg >/dev/null 2>&1 || die "mmsg não encontrado no PATH."
+    command -v jq   >/dev/null 2>&1 || die "jq não encontrado no PATH."
+
+    local res w h mon_x mon_y
+    read -r w h mon_x mon_y < <(focused_monitor_geom)
+    res="${w}x${h}"
+
+    echo "Monitor focado: ${res} (origem ${mon_x},${mon_y})" >&2
+    echo "Posicione o mouse e aperte ENTER pra registrar um ponto." >&2
+    echo "Digite 'q' + ENTER (ou Ctrl+D) pra terminar." >&2
+    echo >&2
+
+    local -a captured=()
+    local i=1 line cx cy lx ly
+    while true; do
+        read -r -p "ponto $i> " line || break
+        [ "$line" = "q" ] && break
+        read -r cx cy < <(cursorpos)
+        lx=$((cx - mon_x))
+        ly=$((cy - mon_y))
+        captured+=("$lx $ly")
+        echo "  -> local (${lx}, ${ly})  [global (${cx}, ${cy})]" >&2
+        i=$((i + 1))
+    done
+
+    [ "${#captured[@]}" -gt 0 ] || die "nenhum ponto capturado."
+
+    [ -n "$name" ] || read -r -p "nome do macro (ex: minecraft): " name
+    [ -n "$name" ] || die "nome do macro é obrigatório."
+
+    local prefix upper
+    upper="$(printf '%s' "$name" | tr '[:lower:]' '[:upper:]' | tr -cd 'A-Z0-9_')"
+
+    echo >&2
+    echo "# salve como macros/${name}.macro (modules/features/macro/macros/)" >&2
+    cat <<EOF
+# macro: ${name}
+
+${upper}_REF="${res}"
+${upper}_POSITIONS=(
+$(for p in "${captured[@]}"; do printf '    "%s"\n' "$p"; done)
+)
+
+MACRO_ALIASES+=(
+    [${name}]=${upper}
+)
+EOF
+}
+
 # ------------------------------------------------------------
 # ARGUMENTOS
 # ------------------------------------------------------------
@@ -305,31 +284,42 @@ click_at() {
 MODE=""
 ONCE=0
 DRYRUN=0
+CAPTURE=0
 
 if [ $# -eq 0 ]; then
+    load_macros
     usage
     exit 0
 fi
 
 for arg in "$@"; do
     case "$arg" in
-        -h|--help) usage; exit 0 ;;
-        --list) list_macros; exit 0 ;;
+        -h|--help) load_macros; usage; exit 0 ;;
+        --list) load_macros; list_macros; exit 0 ;;
         --pos)
             command -v mmsg >/dev/null 2>&1 || die "mmsg não encontrado no PATH."
             command -v jq   >/dev/null 2>&1 || die "jq não encontrado no PATH."
             cursorpos
             exit 0
             ;;
+        --capture) CAPTURE=1 ;;
         --once) ONCE=1 ;;
         --dry-run) DRYRUN=1 ;;
         -*) die "flag desconhecida: '$arg' (veja --help)" ;;
         *)
-            [ -n "$MODE" ] && die "mais de um macro informado ('$MODE' e '$arg')"
+            [ -n "$MODE" ] && die "mais de um macro/nome informado ('$MODE' e '$arg')"
             MODE="$arg"
             ;;
     esac
 done
+
+if [ "$CAPTURE" = 1 ]; then
+    require_tools
+    capture_mode "$MODE"
+    exit 0
+fi
+
+load_macros
 
 [ -n "$MODE" ] || die "nenhum macro informado (veja --list)"
 
@@ -338,8 +328,10 @@ MACRO="${MACRO_ALIASES[$MODE]:-}"
 
 require_tools
 
-RES="$(detect_res)"
-resolve_positions "$MACRO" "$RES"
+RES_W="" RES_H="" MON_X="" MON_Y=""
+read -r RES_W RES_H MON_X MON_Y < <(focused_monitor_geom)
+RES="${RES_W}x${RES_H}"
+resolve_positions "$MACRO" "$RES" "$MON_X" "$MON_Y"
 
 DELAYVAR="${MACRO}_DELAY"
 DELAY="${!DELAYVAR:-$DEFAULT_DELAY}"

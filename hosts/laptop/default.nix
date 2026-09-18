@@ -43,5 +43,6 @@
     proton-vpn
     nautilus
     yazi
+    wev
   ];
 }

@@ -4,16 +4,15 @@
   imports = [
     ../modules/features/zed
     ../modules/features/macro
+    ../modules/features/fastfetch
+    ../modules/features/kitty
+    ../modules/features/ghostty
+    ../modules/features/mango
   ];
 
   home.username = "mathias";
   home.homeDirectory = "/home/mathias";
   home.stateVersion = "24.05";
-
-  xdg.configFile."fastfetch".source = ../modules/features/fastfetch; #home manager
-  xdg.configFile."kitty".source = ../modules/features/kitty; #home manager
-  xdg.configFile."ghostty".source = ../modules/features/ghostty;
-  xdg.configFile."mango".source = ../modules/features/mango;
 
   home.pointerCursor = {
     package = pkgs.bibata-cursors;
