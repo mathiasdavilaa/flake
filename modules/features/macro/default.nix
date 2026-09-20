@@ -30,10 +30,13 @@ in
   # macro-toggle, get-mousepos. É o que o bind SUPER,F8 no mango
   # chama agora (`macro-toggle portal`), em vez de um caminho fixo
   # dentro de ~/.config/mango/scripts.
+  # jq também precisa estar no PATH interativo, não só no da unit
+  # systemd — macro-mouse --capture/--pos rodam direto do shell.
   home.packages = [
     macro-mouse
     macro-toggle
     get-mousepos
+    pkgs.jq
   ];
 
   systemd.user.services."macro-mouse@" = {

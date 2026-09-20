@@ -117,6 +117,45 @@ Isso também vale como variável de ambiente na unit systemd, se
 quiser fixar por máquina em vez de confiar na detecção (nesse caso
 o offset de monitor não é aplicado — assume origem `0,0`).
 
+### 4. Niri — o que muda, o que não dá pra fazer
+
+O `macro-mouse` detecta sozinho se está rodando no mango ou no niri
+(`NIRI_SOCKET` vs `MANGO_INSTANCE_SIGNATURE`; force com
+`MACRO_COMPOSITOR=mango|niri` se precisar). Toca macros nos dois —
+mas **cadastrar** um novo só funciona no mango, por uma limitação
+real do niri, não do script:
+
+**`--capture`/`--pos` não funcionam no niri.** O niri não tem, hoje,
+nenhum comando de IPC pra ler a posição atual do cursor (só
+`mmsg get cursorpos` existe, e é exclusivo do mango). Sem isso não
+tem como saber onde você posicionou o mouse. Rode `--capture` numa
+sessão mango — que continua instalado só pra isso — o `.macro`
+gerado funciona igual nos dois compositores, porque leitura de
+posição só é usada pra CADASTRAR, nunca pra TOCAR.
+
+**Tocar um macro já cadastrado funciona diferente por baixo dos
+panos** (`click_at_niri` em `macro-mouse.sh`). Como não dá pra ler
+"onde o cursor está agora", em vez de ler-e-corrigir (jeito do
+mango) o niri usa uma **âncora**: manda um movimento relativo
+enorme (`NIRI_ANCHOR_MAGNITUDE`, padrão 100000px), que sempre bate
+no canto superior-esquerdo do conjunto de monitores — o compositor
+clampa o cursor na borda, não deixa ele "vazar" pra fora. Dali, um
+delta fixo até o alvo é determinístico, sem depender de onde o
+cursor estava antes de chamar o macro.
+
+⚠️ **Essa técnica não foi testada num niri de verdade** — só
+baseada em como automação Wayland costuma contornar essa mesma
+limitação em outros compositores. Teste com `--dry-run` primeiro;
+se o clique sair no monitor errado, ajuste
+`NIRI_ANCHOR_MAGNITUDE=<valor maior> macro-mouse ...`.
+
+⚠️ **Aceleração do ponteiro:** o niri não configura dispositivo por
+dispositivo (o mango tinha um `devicerule` só pro cursor virtual do
+ydotool). O `modules/features/niri/config.kdl` zera a aceleração
+pra TODO mouse por causa disso — inclusive o seu de verdade. Se
+preferir aceleração normal no mouse físico, veja a nota no próprio
+`config.kdl`; os cliques do macro ficam menos precisos em troca.
+
 ## Adicionar um macro
 
 Cada macro é um arquivo próprio em `macros/*.macro`

@@ -11,6 +11,18 @@ export YDOTOOL_SOCKET="${YDOTOOL_SOCKET:-/run/ydotoold/socket}"
 DEFAULT_DELAY="${MACRO_DELAY:-0.5}"
 MACROS_DIR="${MACROS_DIR:-$(dirname "$(readlink -f "$0")")/macros}"
 
+# detecção de compositor: mango exporta MANGO_INSTANCE_SIGNATURE,
+# niri exporta NIRI_SOCKET (caminho do socket de IPC). Dá pra
+# forçar com MACRO_COMPOSITOR=mango|niri se precisar.
+COMPOSITOR="${MACRO_COMPOSITOR:-}"
+if [ -z "$COMPOSITOR" ]; then
+    if [ -n "${NIRI_SOCKET:-}" ]; then
+        COMPOSITOR=niri
+    else
+        COMPOSITOR=mango
+    fi
+fi
+
 declare -A MACRO_ALIASES=()
 
 load_macros() {
@@ -85,21 +97,40 @@ die() {
 
 require_tools() {
     [ -x "$YDOTOOL" ] || die "ydotool não encontrado em $YDOTOOL."
-    command -v mmsg >/dev/null 2>&1 || die "mmsg não encontrado no PATH (necessário pro movimento relativo)."
     command -v jq >/dev/null 2>&1 || die "jq não encontrado no PATH."
+    if [ "$COMPOSITOR" = mango ]; then
+        command -v mmsg >/dev/null 2>&1 || die "mmsg não encontrado no PATH (necessário pro movimento relativo)."
+    else
+        command -v niri >/dev/null 2>&1 || die "niri não encontrado no PATH."
+    fi
 }
 
-# posição atual real do cursor, segundo o mango: "x y"
+# posição atual real do cursor. SÓ existe no mango (mmsg get
+# cursorpos) — o niri não tem IPC pra ler posição do cursor
+# (confirmado na wiki/issues dele: "planned", não implementado).
+# Pra --capture/--pos, rode numa sessão mango (continua instalado
+# só pra isso); o .macro gerado toca igual nos dois compositores,
+# porque leitura de posição só é usada pra CADASTRAR, não pra
+# TOCAR macro (veja click_at_niri, mais abaixo, que não precisa
+# disso).
 cursorpos() {
-    mmsg get cursorpos | jq -r '"\(.x) \(.y)"'
+    if [ "$COMPOSITOR" != mango ]; then
+        die "posição do cursor não é legível via IPC no niri. Rode --capture/--pos numa sessão mango (continua instalado como alternativa) — o .macro gerado funciona nos dois."
+    fi
+    mmsg get cursorpos | jq -r '"\(.x|floor) \(.y|floor)"'
 }
 
 # geometria do monitor focado: "largura altura origem_x origem_y".
-# origem_x/y ficam em 0 se o mmsg não expuser esses campos — nesse
-# caso o comportamento é idêntico ao de antes (sem offset).
+# origem_x/y ficam em 0 se o mmsg/niri não expuser esses campos —
+# nesse caso o comportamento é sem offset (mesmo de antes).
 focused_monitor_geom() {
     if [ -n "${MACRO_RES:-}" ]; then
         printf '%s 0 0\n' "${MACRO_RES/x/ }"
+        return
+    fi
+
+    if [ "$COMPOSITOR" = niri ]; then
+        niri_focused_monitor_geom
         return
     fi
 
@@ -137,6 +168,53 @@ focused_monitor_geom() {
     done
 
     printf '1920 1080 0 0\n'
+}
+
+# equivalente niri de focused_monitor_geom. Formato JSON não é
+# 100% documentado pro campo "logical" (só confirmei via exemplos
+# da wiki/issues do niri, não testei num niri de verdade) — se
+# `niri msg --json outputs` no seu sistema tiver um formato
+# diferente, isso cai no fallback 1920x1080 0 0 e avisa no stderr.
+niri_focused_monitor_geom() {
+    local geom
+    geom="$(
+        niri msg --json focused-output 2>/dev/null | jq -r '
+            (.logical // .) as $l
+            | "\($l.width|floor) \($l.height|floor) \($l.x|floor) \($l.y|floor)"
+        ' 2>/dev/null
+    )"
+    case "$geom" in
+        [0-9]*' '[0-9]*' '*)
+            printf '%s\n' "$geom"
+            return
+            ;;
+    esac
+    echo "aviso: não consegui ler a geometria do monitor via 'niri msg --json focused-output' — usando 1920x1080 0 0. Confira 'niri msg --json outputs' e ajusta niri_focused_monitor_geom() se o formato for diferente." >&2
+    printf '1920 1080 0 0\n'
+}
+
+# menor x e menor y entre TODOS os outputs — é pra onde um
+# movimento relativo bem grande sempre clampa, não importa em qual
+# monitor o cursor esteja agora. É a "âncora" que click_at_niri usa
+# no lugar de ler a posição atual (que o niri não expõe).
+niri_global_origin() {
+    local origin
+    origin="$(
+        niri msg --json outputs 2>/dev/null | jq -r '
+            [.[] | (.logical // empty) | select(.)] as $ls
+            | if ($ls | length) > 0 then
+                "\(($ls | map(.x) | min)|floor) \(($ls | map(.y) | min)|floor)"
+              else empty end
+        ' 2>/dev/null
+    )"
+    case "$origin" in
+        ""|"null null"|*null*)
+            printf '0 0\n'
+            ;;
+        *)
+            printf '%s\n' "$origin"
+            ;;
+    esac
 }
 
 # scale <valor> <referência> <atual>  (com arredondamento)
@@ -202,11 +280,16 @@ nap() {
     SLEEP_PID=""
 }
 
-# click_at <x-alvo> <y-alvo> [--dry-run]: anda por delta
-# relativo até o alvo (já em coordenada global) e clica. Consulta
-# a posição real antes de cada movimento, então erros não
-# acumulam entre cliques.
+# click_at <x-alvo> <y-alvo> [--dry-run]: move até o alvo (já em
+# coordenada global) e clica. No mango, por delta relativo a partir
+# da posição real atual (mmsg). No niri, ver click_at_niri — não dá
+# pra ler a posição atual, então usa uma âncora fixa.
 click_at() {
+    if [ "$COMPOSITOR" = niri ]; then
+        click_at_niri "$@"
+        return
+    fi
+
     local tx="$1" ty="$2" dry="${3:-}" cx cy dx dy
     read -r cx cy < <(cursorpos)
     dx="$(awk -v t="$tx" -v c="$cx" 'BEGIN{d=t-c; printf "%d", (d>=0)?int(d+0.5):int(d-0.5)}')"
@@ -223,11 +306,49 @@ click_at() {
     "$YDOTOOL" click 0xC0
 }
 
+# distância grande o bastante pra qualquer movimento relativo
+# clampar na borda do conjunto de monitores, não importa o tamanho
+# real deles. NÃO TESTADO num niri de verdade — a técnica em si
+# (mover um valor gigante pra "prender" o cursor no canto) é comum
+# em automação Wayland, mas o valor pode precisar ajuste. Rode com
+# --dry-run primeiro; se o clique sair no monitor errado, aumente
+# NIRI_ANCHOR_MAGNITUDE.
+NIRI_ANCHOR_MAGNITUDE="${NIRI_ANCHOR_MAGNITUDE:-100000}"
+
+# o niri não expõe "onde está o cursor agora" via IPC, então em vez
+# de ler-e-corrigir (como no mango) a gente ANCORA: um mousemove
+# relativo enorme sempre bate no canto superior-esquerdo do
+# conjunto de monitores (o compositor clampa, não deixa "vazar" pra
+# fora) — dali, um delta fixo até o alvo é determinístico, não
+# depende de onde o cursor estava antes.
+click_at_niri() {
+    local tx="$1" ty="$2" dry="${3:-}"
+    local ox oy dx dy
+
+    read -r ox oy < <(niri_global_origin)
+    dx=$((tx - ox))
+    dy=$((ty - oy))
+
+    if [ "$dry" = "--dry-run" ]; then
+        printf 'clicaria em (%s, %s) — ancorando em (%s, %s), delta (%s, %s)\n' \
+            "$tx" "$ty" "$ox" "$oy" "$dx" "$dy"
+        return
+    fi
+
+    "$YDOTOOL" mousemove -x "-$NIRI_ANCHOR_MAGNITUDE" -y "-$NIRI_ANCHOR_MAGNITUDE"
+    "$YDOTOOL" mousemove -x "$dx" -y "$dy"
+    nap 0.05
+    "$YDOTOOL" click 0xC0
+}
+
 # modo guiado: pede ENTER a cada ponto, mostra a posição
 # capturada (já em coordenada LOCAL do monitor focado, pronta pra
 # colar num arquivo macros/<nome>.macro) e imprime o bloco final.
 capture_mode() {
     local name="${1:-}"
+    if [ "$COMPOSITOR" != mango ]; then
+        die "--capture precisa ler a posição do cursor, e o niri não expõe isso via IPC. Rode numa sessão mango (continua instalado como alternativa) — o .macro gerado funciona nos dois compositores."
+    fi
     command -v mmsg >/dev/null 2>&1 || die "mmsg não encontrado no PATH."
     command -v jq   >/dev/null 2>&1 || die "jq não encontrado no PATH."
 
@@ -297,8 +418,8 @@ for arg in "$@"; do
         -h|--help) load_macros; usage; exit 0 ;;
         --list) load_macros; list_macros; exit 0 ;;
         --pos)
-            command -v mmsg >/dev/null 2>&1 || die "mmsg não encontrado no PATH."
-            command -v jq   >/dev/null 2>&1 || die "jq não encontrado no PATH."
+            command -v jq >/dev/null 2>&1 || die "jq não encontrado no PATH."
+            [ "$COMPOSITOR" = mango ] && { command -v mmsg >/dev/null 2>&1 || die "mmsg não encontrado no PATH."; }
             cursorpos
             exit 0
             ;;
@@ -314,7 +435,6 @@ for arg in "$@"; do
 done
 
 if [ "$CAPTURE" = 1 ]; then
-    require_tools
     capture_mode "$MODE"
     exit 0
 fi
