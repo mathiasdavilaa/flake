@@ -3,8 +3,8 @@
 Cliques de mouse automatizados (farm/auto-clicker), disparados por um
 bind do mango e controlados por unit systemd `--user`.
 
-- **Ligar/desligar:** `SUPER+F8` (definido em `mango/binds.conf`,
-  chama o comando `macro-toggle`)
+- **Ligar/desligar:** `SUPER+F8` (definido no `bind` de
+  `modules/features/mango/default.nix`, chama o comando `macro-toggle`)
 - **Editar posições / criar macro novo:** este arquivo, seção
   [Adicionar um macro](#adicionar-um-macro)
 - **Algo quebrou:** seção [Troubleshooting](#troubleshooting)
@@ -78,8 +78,9 @@ acumulam ao longo de várias voltas do macro.
 Pré-requisito pra isso ser preciso: o dispositivo virtual do
 ydotool precisa estar **sem aceleração de ponteiro** (senão o delta
 relativo não bate 1:1 com o pixel — aceleração distorce movimentos
-pequenos vs. grandes). Isso é feito uma vez em
-`mango/devices.conf`, sem afetar seu mouse de verdade:
+pequenos vs. grandes). Isso é feito uma vez no `devicerule` de
+`modules/features/mango/default.nix`, sem afetar seu mouse de
+verdade:
 
 ```
 devicerule=name:ydotoold virtual device,accel_profile:0,accel_speed:0
