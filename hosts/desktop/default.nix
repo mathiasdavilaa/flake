@@ -4,12 +4,9 @@
   imports = [
     ../../modules/common.nix
     ./optimization.nix
-    #../../modules/wm/plasma.nix
     ../../modules/wm/mangowm.nix
   ];
 
-  #========================================
-  # settings for my ssd
   boot = {
     kernelParams = [
       "nvme_core.default_ps_max_latency_us=0"
@@ -35,7 +32,6 @@
       }
     });
   '';
-  #========================================
 
   networking.hostName = "tarnished";
   services.displayManager.defaultSession = "mango";
@@ -72,29 +68,22 @@
   programs.ydotool.enable = true;
 
   environment.systemPackages = with pkgs; [
-    inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default
-    #gaming
     prismlauncher
     mangohud
 
-    #browsers and media
     inputs.zen-browser.packages.${pkgs.system}.default
     spotify
     brave-origin
 
-    #proton
     proton-vpn
     proton-pass
     protonup-qt
 
-    #chat
     discord
     zapzap
 
-    #files
     localsend
 
-    #utils
     usbutils
     wlr-randr
     wev

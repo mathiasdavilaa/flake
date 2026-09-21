@@ -3,12 +3,9 @@
 {
   imports = [
     ../modules/features/zed
-    ../modules/features/macro
     ../modules/features/fastfetch
-    ../modules/features/kitty
     ../modules/features/ghostty
     ../modules/features/mango
-    ../modules/features/yazi
   ];
 
   home.username = "mathias";
@@ -40,6 +37,8 @@
       ff = "fastfetch";
     };
   };
+
+  programs.yazi.enable = true;
 
   programs.home-manager.enable = true;
 }

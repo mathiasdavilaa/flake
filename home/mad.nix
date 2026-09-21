@@ -4,13 +4,19 @@
   imports = [
     inputs.nix-flatpak.homeManagerModules.nix-flatpak
     ../modules/features/zed
-    ../modules/features/macro
     ../modules/features/fastfetch
-    ../modules/features/kitty
     ../modules/features/ghostty
     ../modules/features/mango
-    ../modules/features/yazi
+    inputs.dms.homeModules.dank-material-shell
   ];
+
+  programs.dank-material-shell = {
+    enable = true;
+    systemd = {
+      enable = true;
+      restartIfChanged = true;
+    };
+  };
 
   home.username = "mad";
   home.homeDirectory = "/home/mad";
@@ -58,6 +64,8 @@
       ff = "fastfetch";
     };
   };
+
+  programs.yazi.enable = true;
 
   programs.home-manager.enable = true;
 }

@@ -1,5 +1,59 @@
 {
   "nodes": {
+    "dank-qml-common": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1790003999,
+        "narHash": "sha256-1D3b45g4gmn4hczziKLykliW3oc1d8uqddzZ2poN6fQ=",
+        "owner": "AvengeMedia",
+        "repo": "dank-qml-common",
+        "rev": "17e81ad63eb2c36e64021e8dc5af51781b14127b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "AvengeMedia",
+        "repo": "dank-qml-common",
+        "type": "github"
+      }
+    },
+    "dms": {
+      "inputs": {
+        "dank-qml-common": "dank-qml-common",
+        "flake-compat": "flake-compat",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1790018840,
+        "narHash": "sha256-RpzQSF/LLQViqFdnAmdoQ38XqW+2DzBkuf93l2QUH5E=",
+        "owner": "AvengeMedia",
+        "repo": "DankMaterialShell",
+        "rev": "17ecaad8dd5416369507b373dbcd6bac97c3bc6d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "AvengeMedia",
+        "repo": "DankMaterialShell",
+        "type": "github"
+      }
+    },
+    "flake-compat": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1767039857,
+        "narHash": "sha256-vNpUSpF5Nuw8xvDLj2KCwwksIbjua2LZCqhV1LNRDns=",
+        "owner": "NixOS",
+        "repo": "flake-compat",
+        "rev": "5edf11c44bc78a0d334f6334cdaf7d60d732daab",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "flake-compat",
+        "type": "github"
+      }
+    },
     "flake-parts": {
       "inputs": {
         "nixpkgs-lib": "nixpkgs-lib"
@@ -165,33 +219,13 @@
         "type": "github"
       }
     },
-    "noctalia": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1789344529,
-        "narHash": "sha256-vZ0K+5Par33Omh1z1iRAXEvS4m0/jIb6S6aflJjyUVE=",
-        "owner": "noctalia-dev",
-        "repo": "noctalia",
-        "rev": "5d66d118861fedcbe039d9d04d06904cced40613",
-        "type": "github"
-      },
-      "original": {
-        "owner": "noctalia-dev",
-        "repo": "noctalia",
-        "type": "github"
-      }
-    },
     "root": {
       "inputs": {
+        "dms": "dms",
         "home-manager": "home-manager",
         "mangowm": "mangowm",
         "nix-flatpak": "nix-flatpak",
         "nixpkgs": "nixpkgs",
-        "noctalia": "noctalia",
         "silent-sddm": "silent-sddm",
         "xwayland-satellite-flake": "xwayland-satellite-flake",
         "zen-browser": "zen-browser"

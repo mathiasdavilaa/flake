@@ -8,7 +8,8 @@
   wayland.windowManager.mango = {
     enable = true;
     autostart_sh = ''
-      noctalia &
+      dbus-update-activation-environment --systemd --all
+      systemctl --user start mango-session.target
       fcitx5 &
     '';
 
@@ -16,7 +17,6 @@
       sloppyfocus = 0;
       scroller_structs = 1;
 
-      # --- devices ---
       xkb_rules_layout = "us,br";
       xkb_rules_options = "caps:escape";
       repeat_rate = 30;
@@ -25,7 +25,6 @@
       mouse_accel_profile = 2;
       mouse_accel_speed = -0.6;
 
-      # --- decorations ---
       borderpx = 2;
       border_radius = 15;
       gappiv = 2;
@@ -39,48 +38,56 @@
       focuscolor = "0xc66b25ff";
       urgentcolor = "0xad401fff";
 
-      # --- monitors ---
       monitorrule = [
         "name:^HDMI-A-1$,rr:1"
         "name:^DE-3$,rr:0"
       ];
 
-      # --- rules ---
       tagrule = [
-        "id:*,monitor_name:HDMI-A-1,layout_name:vertical_scroller"
-        "id:*,monitor_name:DP-3,layout_name:scroller"
+        "id:1,monitor_name:HDMI-A-1,layout_name:vertical_scroller"
+        "id:2,monitor_name:HDMI-A-1,layout_name:vertical_scroller"
+        "id:3,monitor_name:HDMI-A-1,layout_name:vertical_scroller"
+        "id:4,monitor_name:HDMI-A-1,layout_name:vertical_scroller"
+        "id:5,monitor_name:HDMI-A-1,layout_name:vertical_scroller"
+        "id:6,monitor_name:HDMI-A-1,layout_name:vertical_scroller"
+        "id:7,monitor_name:HDMI-A-1,layout_name:vertical_scroller"
+        "id:8,monitor_name:HDMI-A-1,layout_name:vertical_scroller"
+        "id:9,monitor_name:HDMI-A-1,layout_name:vertical_scroller"
+
+        "id:1,monitor_name:DP-3,layout_name:scroller"
+        "id:2,monitor_name:DP-3,layout_name:scroller"
+        "id:3,monitor_name:DP-3,layout_name:scroller"
+        "id:4,monitor_name:DP-3,layout_name:scroller"
+        "id:5,monitor_name:DP-3,layout_name:scroller"
+        "id:6,monitor_name:DP-3,layout_name:scroller"
+        "id:7,monitor_name:DP-3,layout_name:scroller"
+        "id:8,monitor_name:DP-3,layout_name:scroller"
+        "id:9,monitor_name:DP-3,layout_name:scroller"
       ];
-      # "isfloating:1,title:^Yazi$"
       devicerule = [
         "name:ydotoold virtual device,accel_profile:0,accel_speed:0"
       ];
 
-      # --- binds ---
       bind = [
-        # Main binds
         "SUPER,w,spawn,ghostty"
         "SUPER,q,killclient"
         "SUPER,e,spawn,ghostty --title=Yazi -e yazi"
-        ''SUPER,r,spawn_shell,mmsg reload_config && noctalia msg notification-show "Mango recarregado" "Configuração atualizada"''
+        "SUPER,r,spawn_shell,mmsg reload_config"
 
-        # Mango
         "SUPER+Alt,F4,quit"
 
-        # Noctalia
-        "SUPER,d,spawn,noctalia msg panel-toggle launcher"
-        "SUPER,F2,spawn,noctalia msg panel-toggle clipboard"
-        "SUPER,Escape,spawn,noctalia msg panel-toggle session"
-        "SUPER,F1,spawn,noctalia msg panel-toggle kenn/keybind-cheatsheet:cheatsheet"
-        "NONE,Print,spawn,noctalia msg screenshot-region"
-        "NONE,XF86AudioRaiseVolume,spawn,noctalia msg volume-up"
-        "NONE,XF86AudioLowerVolume,spawn,noctalia msg volume-down"
-        "NONE,XF86AudioMute,spawn,noctalia msg volume-mute"
-        "NONE,XF86MonBrightnessUp,spawn,noctalia msg brightness-up"
-        "NONE,XF86MonBrightnessDown,spawn,noctalia msg brightness-down"
+        "SUPER,d,spawn,dms ipc call spotlight toggle"
+        "SUPER,F2,spawn,dms ipc call clipboard toggle"
+        "SUPER,Escape,spawn,dms ipc call powermenu toggle"
+        "SUPER,F1,spawn,dms ipc call keybinds toggle mangowc"
+        "NONE,Print,spawn,dms screenshot"
+        "NONE,XF86AudioRaiseVolume,spawn,dms ipc call audio increment 3"
+        "NONE,XF86AudioLowerVolume,spawn,dms ipc call audio decrement 3"
+        "NONE,XF86AudioMute,spawn,dms ipc call audio mute"
+        "NONE,XF86MonBrightnessUp,spawn,dms ipc call brightness increment 5"
+        "NONE,XF86MonBrightnessDown,spawn,dms ipc call brightness decrement 5"
 
-        # Window
         "SUPER+SHIFT,f,togglefullscreen"
-        # "SUPER,f,togglemaximizescreen"
         "SUPER,f,set_proportion,1.0"
         "SUPER,v,togglefloating"
 
@@ -89,7 +96,6 @@
         "SUPER,Prior,set_proportion,0.5"
         "SUPER,Next,set_proportion,0.8"
 
-        # Navigation
         "SUPER,h,focusdir,left"
         "SUPER,k,focusdir,up"
         "SUPER,j,focusdir,down"
@@ -141,9 +147,6 @@
         "SUPER,home,focusmon,right"
         "SUPER+SHIFT,home,tagmon,right"
         "SUPER+CTRL,home,spawn,~/.config/mango/scripts/move-window-right-silent.sh"
-
-        # SCRIPT
-        "SUPER,F8,spawn_shell,macro-toggle portal"
       ];
 
       mousebind = [

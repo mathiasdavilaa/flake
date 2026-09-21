@@ -48,8 +48,6 @@
   environment.systemPackages = with pkgs; [
     git
     lazygit
-    ghostty
-    fastfetch
     xwayland
     mpv
     imv
@@ -58,7 +56,7 @@
     ydotool
     libnotify
 
-    #coding languages
+    # Coding languages
     python3
   ];
 
