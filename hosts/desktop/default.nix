@@ -70,20 +70,16 @@
   environment.systemPackages = with pkgs; [
     prismlauncher
     mangohud
-
     inputs.zen-browser.packages.${pkgs.system}.default
     spotify
     brave-origin
-
     proton-vpn
     proton-pass
     protonup-qt
-
     discord
     zapzap
-
     localsend
-
+    nautilus
     usbutils
     wlr-randr
     wev

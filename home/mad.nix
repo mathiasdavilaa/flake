@@ -61,6 +61,7 @@
       ncfg = "zeditor ~/flake";
       nrs = "cd ~/flake && git add . && sudo nixos-rebuild switch --impure --flake ~/flake#desktop";
       nru = "nix flake update --flake ~/flake";
+      nixclean = "sudo nix-env --profile /nix/var/nix/profiles/system --delete-generations +5";
       ff = "fastfetch";
     };
   };

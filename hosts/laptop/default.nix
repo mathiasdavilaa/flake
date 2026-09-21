@@ -40,5 +40,6 @@
     proton-pass
     proton-vpn
     wev
+    nautilus
   ];
 }

@@ -9,6 +9,9 @@
   services.flatpak.enable = true;
   services.udisks2.enable = true;
 
+  services.accounts-daemon.enable = true;
+  services.power-profiles-daemon.enable = true;
+
   boot.loader.systemd-boot.enable = false;
   boot.loader.efi.canTouchEfiVariables = true;
 
