@@ -93,14 +93,10 @@
 
     #files
     localsend
-    yazi
-    nautilus
 
     #utils
     usbutils
     wlr-randr
     wev
-    zip
-    unzip
   ];
 }

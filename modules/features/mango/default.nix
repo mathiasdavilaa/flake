@@ -7,12 +7,6 @@
 
   wayland.windowManager.mango = {
     enable = true;
-
-    # autostart_sh em vez de exec-once=[lista]: essa opção é
-    # documentada explicitamente pra isso, sem ambiguidade de como
-    # múltiplos exec-once viram linhas. O "&" é obrigatório aqui —
-    # é UM script rodando em sequência, sem background o noctalia
-    # nunca devolve o terminal e o fcitx5 nunca chega a subir.
     autostart_sh = ''
       noctalia &
       fcitx5 &
@@ -20,8 +14,9 @@
 
     settings = {
       sloppyfocus = 0;
+      scroller_structs = 1;
 
-      # --- input (antigo devices.conf) ---
+      # --- devices ---
       xkb_rules_layout = "us,br";
       xkb_rules_options = "caps:escape";
       repeat_rate = 30;
@@ -30,26 +25,7 @@
       mouse_accel_profile = 2;
       mouse_accel_speed = -0.6;
 
-      # scroll_method / trackpad_natural_scrolling removidos por
-      # enquanto: a wiki documenta esses nomes, mas o build acusa
-      # "Unknown keyword" pros dois — a wiki não bate com a versão
-      # nightly pinada no seu flake. Veja meu comentário no chat:
-      # preciso do /etc/mango/config.conf real do seu sistema pra
-      # acertar isso sem mais chute.
-
-      # --- aparência (antigo decorations.conf) ---
-      # NOTA: isso substitui os valores que estavam em noctalia.conf
-      # (um snapshot gerado automaticamente pelo Noctalia). Optei
-      # por NÃO portar esse snapshot pro Nix — ele era regenerado
-      # em tempo real pelo Noctalia, e essa pasta inteira já estava
-      # symlinkada pro Nix store (somente leitura) antes dessa
-      # migração, então o Noctalia provavelmente já não conseguia
-      # reescrever ali mesmo; era um valor estático desatualizado,
-      # não uma sincronização viva de verdade. Se o Noctalia
-      # realmente escreve nesse arquivo em tempo real no seu
-      # sistema, me avisa que eu religo o `source=./noctalia.conf`
-      # (e paro de gerenciar esse caminho específico via Nix, pra
-      # sobrar gravável).
+      # --- decorations ---
       borderpx = 2;
       border_radius = 15;
       gappiv = 2;
@@ -63,17 +39,23 @@
       focuscolor = "0xc66b25ff";
       urgentcolor = "0xad401fff";
 
-      # --- regras (antigo rules.conf) ---
-      tagrule = [
-        "id:*,layout_name:scroller"
+      # --- monitors ---
+      monitorrule = [
+        "name:^HDMI-A-1$,rr:1"
+        "name:^DE-3$,rr:0"
       ];
-      # windowrule desativada no arquivo antigo — mantida comentada:
+
+      # --- rules ---
+      tagrule = [
+        "id:*,monitor_name:HDMI-A-1,layout_name:vertical_scroller"
+        "id:*,monitor_name:DE-3,layout_name:scroller"
+      ];
       # "isfloating:1,title:^Yazi$"
       devicerule = [
         "name:ydotoold virtual device,accel_profile:0,accel_speed:0"
       ];
 
-      # --- binds (antigo binds.conf) ---
+      # --- binds ---
       bind = [
         # Main binds
         "SUPER,w,spawn,ghostty"
@@ -98,7 +80,7 @@
 
         # Window
         "SUPER+SHIFT,f,togglefullscreen"
-        # "SUPER,f,togglemaximizescreen" # desativada no arquivo antigo
+        # "SUPER,f,togglemaximizescreen"
         "SUPER,f,set_proportion,1.0"
         "SUPER,v,togglefloating"
 
@@ -160,15 +142,6 @@
         "SUPER+SHIFT,home,tagmon,right"
         "SUPER+CTRL,home,spawn,~/.config/mango/scripts/move-window-right-silent.sh"
 
-        # DEBUG — usa pra checar o estado do mango quando o Sober
-        # travar em fullscreen. Loga num arquivo em vez de abrir
-        # terminal de propósito: abrir uma janela nova por cima
-        # pode, sozinho, tirar o jogo do fullscreen (muita coisa
-        # sai do fullscreen ao perder foco/monitor), o que
-        # contaminaria o teste. Depois de apertar, sai do jogo
-        # (ou Alt+Tab) e roda: cat /tmp/mango-debug.log
-        "SUPER+SHIFT,i,spawn_shell,{ echo === $(date +%T) ===; mmsg get focusing-client; mmsg -m; echo; } >> /tmp/mango-debug.log 2>&1"
-
         # SCRIPT
         "SUPER,F8,spawn_shell,macro-toggle portal"
       ];
@@ -180,10 +153,6 @@
     };
   };
 
-  # move-window-right-silent.sh ainda é referenciado por um bind
-  # acima (~/.config/mango/scripts/...) — o módulo do mango só
-  # gerencia config.conf/autostart.sh, então esse script continua
-  # sendo linkado à parte.
   xdg.configFile."mango/scripts/move-window-right-silent.sh".source =
     ./scripts/move-window-right-silent.sh;
 }

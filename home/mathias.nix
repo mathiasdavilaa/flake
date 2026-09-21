@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   imports = [
@@ -8,6 +8,7 @@
     ../modules/features/kitty
     ../modules/features/ghostty
     ../modules/features/mango
+    ../modules/features/yazi
   ];
 
   home.username = "mathias";

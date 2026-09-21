@@ -19,7 +19,7 @@
 
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  # Keep the kernel memory limits suitable for modern games
+  # keep the kernel memory limits suitable for modern games
   boot.kernel.sysctl = {
     "vm.max_map_count" = 2147483642;
   };
@@ -40,7 +40,7 @@
     __GL_MaxFramesAllowed = "1";
   };
 
-  # GameMode prioritizes CPU performance while a game is running
+  # gameMode prioritizes CPU performance while a game is running
   programs.gamemode = {
     enable = true;
     enableRenice = true;
@@ -60,17 +60,17 @@
 
   services.irqbalance.enable = true;
 
-  # Gamescope provides a dedicated game compositor and frame control
+  # gamescope provides a dedicated game compositor and frame control
   programs.gamescope = {
     enable = true;
     capSysNice = true;
     enableWsi = true;
   };
 
-  # Steam Input compatibility for Wayland sessions
+  # steam Input compatibility for Wayland sessions
   programs.steam.extest.enable = true;
 
-  # Gaming diagnostics and performance tools
+  # gaming diagnostics and performance tools
   environment.systemPackages = with pkgs; [
     gamemode
     gamescope

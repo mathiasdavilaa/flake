@@ -1,4 +1,4 @@
-{ config, pkgs, inputs, ... }:
+{ pkgs, inputs, ... }:
 
 {
   imports = [
@@ -9,6 +9,7 @@
     ../modules/features/kitty
     ../modules/features/ghostty
     ../modules/features/mango
+    ../modules/features/yazi
   ];
 
   home.username = "mad";
