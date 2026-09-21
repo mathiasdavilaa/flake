@@ -1,4 +1,5 @@
-#!/usr/bin/env bash
+source_monitor=$(mmsg get focusing-client | jq -r '.monitor')
 
 mmsg dispatch tagmon,right
-mmsg dispatch focusmon,left
+
+mmsg dispatch focusmon,"$source_monitor"

@@ -48,7 +48,7 @@
       # --- rules ---
       tagrule = [
         "id:*,monitor_name:HDMI-A-1,layout_name:vertical_scroller"
-        "id:*,monitor_name:DE-3,layout_name:scroller"
+        "id:*,monitor_name:DP-3,layout_name:scroller"
       ];
       # "isfloating:1,title:^Yazi$"
       devicerule = [
