@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ inputs, pkgs, ... }:
 
 {
   imports = [
@@ -6,6 +6,7 @@
     ../modules/features/fastfetch
     ../modules/features/ghostty
     ../modules/features/mango
+    inputs.dms.homeModules.dank-material-shell
   ];
 
   home.username = "mathias";
@@ -21,6 +22,14 @@
     gtk.enable = true;
     x11.enable = true;
   };
+
+  programs.dank-material-shell = {
+      enable = true;
+      systemd = {
+        enable = true;
+        restartIfChanged = true;
+      };
+    };
 
   programs.fish = {
     enable = true;
