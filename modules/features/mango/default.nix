@@ -40,7 +40,7 @@
 
       monitorrule = [
         "name:^HDMI-A-1$,rr:1"
-        "name:^DE-3$,rr:0"
+        "name:^DP-3$,rr:0"
       ];
 
       tagrule = [
